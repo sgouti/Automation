@@ -1,0 +1,26 @@
+{
+  "name": "playwright-demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "show-report": "npx playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.13.2",
+    "allure-playwright": "^3.2.1",
+    "typescript": "^5.0.0",
+    "@types/uuid": "^9.0.8"
+  },
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.33.2",
+    "dotenv": "^16.5.0",
+    "playwright": "^1.52.0",
+    "uuid": "^9.0.1"
+  }
+}

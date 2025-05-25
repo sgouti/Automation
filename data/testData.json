@@ -1,0 +1,12 @@
+{
+    "validUser": {
+        "username": "standard_user",
+        "password": "secret_sauce"
+    },
+    "products": {
+        "blackTShirt": "Sauce Labs Bolt T-Shirt",
+        "pants": "Sauce Labs Pants",
+        "backpack": "Sauce Labs Backpack",
+        "watch": "Sauce Labs Watch"
+    }
+}
