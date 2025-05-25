@@ -1,3 +1,11 @@
+// InfluxDB Configuration
+const INFLUXDB_CONFIG = {
+  url: 'http://localhost:8086',
+  token: 'AH8mpJnruV6K3sE4pD_l_jKhdYit3E07GkcdL2iKFx9oZ03n3MnBY5IXPRWAMqp6AExvQNrW_fPLjyLjAfJSpw==',
+  org: 'Siddharth',
+  bucket: 'playwright1',
+};
+
 import { Reporter, TestCase, TestResult, Suite, FullConfig } from '@playwright/test/reporter';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -47,28 +55,46 @@ interface SuiteData {
   suites?: SuiteData[];
 }
 
+interface ReporterOptions {
+  influxDB?: boolean;
+  influxUrl?: string;
+  influxToken?: string;
+  influxOrg?: string;
+  influxBucket?: string;
+}
+
 class CustomReporter implements Reporter {
   private project: { name: string; projectId: string } = { name: '', projectId: '' };
   private suites: SuiteData[] = [];
-  private runSummary: any = { status: 'unknown', duration: 0, passed: 0, failed: 0, timedOut: 0, flaky: 0, skipped: 0, expected: 0, unexpected: 0, workers: 0 };
+  private runSummary: any = { status: 'unknown', duration: 0, passed: 0, failed: 0, timedOut: 0, flaky: 0, skipped: 0, expected: 0, unexpected: 0, workers: 0, fullyParallel: false };
   private globalErrors: any[] = [];
-  private influxClient: InfluxDB;
-  private writeApi: any;
-  private bucket: string = 'playwright1';
-  private org: string = 'Siddharth';
+  private influxClient?: InfluxDB;
+  private writeApi?: any;
+  private bucket: string;
+  private org: string;
   private startTime: Date;
+  private influxDBEnabled: boolean;
 
-  constructor(config: FullConfig) {
-    const url = 'http://localhost:8086';
-    const token = 'AH8mpJnruV6K3sE4pD_l_jKhdYit3E07GkcdL2iKFx9oZ03n3MnBY5IXPRWAMqp6AExvQNrW_fPLjyLjAfJSpw==';
-    this.influxClient = new InfluxDB({ url, token });
-    this.writeApi = this.influxClient.getWriteApi(this.org, this.bucket, 'ms');
+  constructor(config: FullConfig, options: ReporterOptions = {}) {
+    this.influxDBEnabled = options.influxDB ?? false;
     this.startTime = new Date();
-    this.writeApi.useDefaultTags({ host: 'playwright-tests' });
+    this.org = options.influxOrg || INFLUXDB_CONFIG.org;
+    this.bucket = options.influxBucket || INFLUXDB_CONFIG.bucket;
+
+    if (this.influxDBEnabled) {
+      const url = options.influxUrl || INFLUXDB_CONFIG.url;
+      const token = options.influxToken || INFLUXDB_CONFIG.token;
+      this.influxClient = new InfluxDB({ url, token });
+      this.writeApi = this.influxClient.getWriteApi(this.org, this.bucket, 'ms');
+      this.writeApi.useDefaultTags({ host: 'playwright-tests' });
+    }
+
+    this.runSummary.fullyParallel = config.fullyParallel || false;
   }
 
-  onBegin(config, suite) {
+  onBegin(config: FullConfig, suite: Suite) {
     this.runSummary.workers = config.workers;
+    this.runSummary.fullyParallel = config.fullyParallel || false;
     this.project = {
       name: suite.project()?.name || 'unknown',
       projectId: uuidv4(),
@@ -180,47 +206,49 @@ class CustomReporter implements Reporter {
           this.runSummary.unexpected++;
         }
 
-        // Write to InfluxDB
-        const suiteTitle = test.location.file?.split(/[\\/]/).pop() || 'unknownitorio';
-        const projectName = test.parent.project()?.name || 'unknown';
+        // Write to InfluxDB only if enabled
+        if (this.influxDBEnabled && this.writeApi) {
+          const suiteTitle = test.location.file?.split(/[\\/]/).pop() || 'unknownitorio';
+          const projectName = test.parent.project()?.name || 'unknown';
 
-        // Write test data
-        const testPoint = new Point('tests')
-          .tag('suite_title', suiteTitle)
-          .tag('test_title', test.title)
-          .tag('project', projectName)
-          .tag('status', result.status)
-          .floatField('duration', result.duration || 0.0)
-          .stringField('error_message', result.errors.length > 0 ? result.errors[0].message || '' : '')
-          .stringField('error_stack', result.errors.length > 0 ? result.errors[0].stack || '' : '')
-          .timestamp(new Date(result.startTime));
-        this.writeApi.writePoint(testPoint);
-        console.log(`Wrote test to InfluxDB: ${test.title}`);
-
-        // Write steps
-        for (const step of result.steps) {
-          const stepPoint = new Point('steps')
-            .tag('step_title', step.title)
-            .tag('test_title', test.title)
-            .tag('category', step.category || 'step')
-            .floatField('duration', step.duration || 0.0)
-            .stringField('error_message', step.error ? step.error.message || '' : '')
-            .stringField('error_code', step.error ? step.error.snippet || '' : '')
-            .timestamp(new Date(result.startTime));
-          this.writeApi.writePoint(stepPoint);
-          console.log(`Wrote step to InfluxDB: ${step.title}`);
-        }
-
-        // Write console messages
-        for (const msg of consoleMessages) {
-          const consolePoint = new Point('console_messages')
+          // Write test data
+          const testPoint = new Point('tests')
+            .tag('suite_title', suiteTitle)
             .tag('test_title', test.title)
             .tag('project', projectName)
-            .tag('type', msg.type)
-            .stringField('message', msg.text)
-            .timestamp(new Date(msg.timestamp));
-          this.writeApi.writePoint(consolePoint);
-          console.log(`Wrote console message to InfluxDB: ${msg.text}`);
+            .tag('status', result.status)
+            .tag('fullyParallel', this.runSummary.fullyParallel.toString())
+            .floatField('duration', result.duration || 0.0)
+            .stringField('error_message', result.errors.length > 0 ? result.errors[0].message || '' : '')
+            .stringField('error_stack', result.errors.length > 0 ? result.errors[0].stack || '' : '')
+            .timestamp(new Date(result.startTime));
+          this.writeApi.writePoint(testPoint);
+
+          // Write steps
+          for (const step of result.steps) {
+            const stepPoint = new Point('steps')
+              .tag('step_title', step.title)
+              .tag('test_title', test.title)
+              .tag('category', step.category || 'step')
+              .tag('fullyParallel', this.runSummary.fullyParallel.toString())
+              .floatField('duration', step.duration || 0.0)
+              .stringField('error_message', step.error ? step.error.message || '' : '')
+              .stringField('error_code', step.error ? step.error.snippet || '' : '')
+              .timestamp(new Date(result.startTime));
+            this.writeApi.writePoint(stepPoint);
+          }
+
+          // Write console messages
+          for (const msg of consoleMessages) {
+            const consolePoint = new Point('console_messages')
+              .tag('test_title', test.title)
+              .tag('project', projectName)
+              .tag('type', msg.type)
+              .tag('fullyParallel', this.runSummary.fullyParallel.toString())
+              .stringField('message', msg.text)
+              .timestamp(new Date(msg.timestamp));
+            this.writeApi.writePoint(consolePoint);
+          }
         }
       }
     }
@@ -241,21 +269,22 @@ class CustomReporter implements Reporter {
     const reportsDir = 'reports';
     const fileName = `test-results-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
     const filePath = path.join(reportsDir, fileName);
-    
+
     // Ensure the reports folder exists
     fs.mkdirSync(reportsDir, { recursive: true });
-    
+
     // Write the file
     fs.writeFileSync(filePath, JSON.stringify(output, null, 2));
-    console.log(`Wrote JSON report to ${filePath}`);
 
-    // Flush and close InfluxDB write API
-    try {
-      await this.writeApi.flush();
-      await this.writeApi.close();
-      console.log('InfluxDB write API closed successfully');
-    } catch (error) {
-      console.error('Failed to close InfluxDB write API:', error);
+    // Flush and close InfluxDB write API only if enabled
+    if (this.influxDBEnabled && this.writeApi) {
+      try {
+        await this.writeApi.flush();
+        await this.writeApi.close();
+        console.log('InfluxDB write API closed successfully');
+      } catch (error) {
+        console.error('Failed to close InfluxDB write API:', error);
+      }
     }
   }
 
