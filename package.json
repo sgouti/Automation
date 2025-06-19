@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
+    "test:nlp": "npx ts-node tests/nlp_to_sql.test.ts",
     "show-report": "npx playwright show-report"
   },
   "keywords": [],
@@ -12,14 +13,19 @@
   "description": "",
   "devDependencies": {
     "@playwright/test": "^1.52.0",
-    "@types/node": "^22.13.2",
+    "@types/natural": "^5.1.5",
+    "@types/node": "^22.15.32",
+    "@types/pg": "^8.15.4",
+    "@types/uuid": "^9.0.8",
     "allure-playwright": "^3.2.1",
-    "typescript": "^5.0.0",
-    "@types/uuid": "^9.0.8"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
   },
   "dependencies": {
     "@influxdata/influxdb-client": "^1.33.2",
     "dotenv": "^16.5.0",
+    "natural": "^8.1.0",
+    "pg": "^8.16.1",
     "playwright": "^1.52.0",
     "uuid": "^9.0.1"
   }
