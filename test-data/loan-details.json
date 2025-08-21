@@ -1,0 +1,8 @@
+{
+  "expectedData": {
+    "applicantName": "John Doe",
+    "loanAmount": 10000,
+    "loanType": "Personal",
+    "status": "Approved"
+  }
+}

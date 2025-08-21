@@ -1,8 +1,16 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "ES2020",
     "module": "commonjs",
+    "esModuleInterop": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true
-  }
+    "lib": ["ES2020", "dom"],
+    "strict": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "step-definitions/**/*.ts",
+    "page-objects/**/*.ts",
+    "utils/**/*.ts"
+  ]
 }

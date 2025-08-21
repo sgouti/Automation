@@ -1,7 +1,13 @@
+
 # Playwright
 node_modules/
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-.env
+
+# Cucumber reports
+reports/
+
+# Dummy test data
+test-data/dummy.pdf

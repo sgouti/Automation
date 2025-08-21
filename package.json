@@ -1,26 +1,30 @@
 {
-  "name": "playwright-demo",
+  "name": "app",
   "version": "1.0.0",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test",
-    "show-report": "npx playwright show-report"
+    "test": "npx playwright test",
+    "test:cucumber": "cucumber-js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sgouti/Automation.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "devDependencies": {
-    "@playwright/test": "^1.52.0",
-    "@types/node": "^22.13.2",
-    "allure-playwright": "^3.2.1",
-    "typescript": "^5.0.0",
-    "@types/uuid": "^9.0.8"
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sgouti/Automation/issues"
   },
-  "dependencies": {
-    "@influxdata/influxdb-client": "^1.33.2",
-    "dotenv": "^16.5.0",
-    "playwright": "^1.52.0",
-    "uuid": "^9.0.1"
+  "homepage": "https://github.com/sgouti/Automation#readme",
+  "devDependencies": {
+    "@cucumber/cucumber": "^12.1.0",
+    "@playwright/test": "^1.54.2",
+    "@types/node": "^24.3.0",
+    "csv-parse": "^6.1.0",
+    "pdf-parse": "^1.1.1",
+    "ts-node": "^10.9.2"
   }
 }
