@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx playwright test",
-    "test:cucumber": "cucumber-js"
+    "test": "npx playwright test"
   },
   "repository": {
     "type": "git",
@@ -20,7 +19,6 @@
   },
   "homepage": "https://github.com/sgouti/Automation#readme",
   "devDependencies": {
-    "@cucumber/cucumber": "^12.1.0",
     "@playwright/test": "^1.54.2",
     "@types/node": "^24.3.0",
     "csv-parse": "^6.1.0",
